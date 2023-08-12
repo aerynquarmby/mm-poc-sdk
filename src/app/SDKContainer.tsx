@@ -83,11 +83,16 @@ export default function SDKContainer() {
     } else {
       setConnected(false);
     }
+    const POLYGON_CHAIN_ID = "0x89"; // This is 137 in decimal
 
     const onChainChanged = (chain: unknown) => {
       console.log(`App::useEfect on 'chainChanged'`, chain);
       setChain(chain as string);
       setConnected(true);
+      
+      if(chain !== POLYGON_CHAIN_ID) {
+        alert("Please switch to Polygon network");
+      }
     };
 
     const onInitialized = () => {
@@ -309,7 +314,7 @@ export default function SDKContainer() {
           Terminate
         </button>
 <div>
-<UsdtApprovalButton connected={connected} account={account} />
+<UsdtApprovalButton connected={connected} account={account}/>
 </div>
         <div>
           <>
