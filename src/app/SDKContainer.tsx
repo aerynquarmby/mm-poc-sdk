@@ -8,6 +8,8 @@ import {
 } from '@metamask/sdk-communication-layer';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
+import UsdtApprovalButton from './UsdtApprovalButton';  // Import at the top
+
 
 declare global {
   interface Window {
@@ -306,7 +308,9 @@ export default function SDKContainer() {
         >
           Terminate
         </button>
-
+<div>
+<UsdtApprovalButton connected={connected} account={account} />
+</div>
         <div>
           <>
             {chain && `Connected chain: ${chain}`}
