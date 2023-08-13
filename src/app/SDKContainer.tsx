@@ -26,6 +26,21 @@ export default function SDKContainer() {
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>();
   const [activeProvider, setActiveProvider] = useState<SDKProvider>();
 
+   const switchToPolygon = async () => {
+     try {
+         await window?.ethereum?.request({
+             method: 'wallet_switchEthereumChain',
+             params: [{ chainId: "0x89" }],
+         });
+     } catch (error:any) {
+         if (error.code === 4902) {
+             console.error('Polygon network not added to user wallet');
+         } else {
+             console.error('Error switching to Polygon:', error);
+         }
+     }
+ };
+
   const connect = () => {
     if (!window.ethereum) {
       throw new Error(`invalid ethereum provider`);
@@ -39,6 +54,7 @@ export default function SDKContainer() {
       .then((accounts) => {
         if (accounts) {
           console.debug(`connect:: accounts result`, accounts);
+         switchToPolygon()
           setAccount((accounts as string[])[0]);
           setConnected(true);
         }
@@ -92,6 +108,7 @@ export default function SDKContainer() {
       
       if(chain !== POLYGON_CHAIN_ID) {
         alert("Please switch to Polygon network");
+        switchToPolygon()
       }
     };
 
@@ -285,25 +302,25 @@ export default function SDKContainer() {
         {serviceStatus?.connectionStatus === ConnectionStatus.WAITING && (
           <div>Waiting for Metamask to link the connection...</div>
         )}
-        <p>ChannelId: {serviceStatus?.channelConfig?.channelId}</p>
-        <p>{`Expiration: ${serviceStatus?.channelConfig?.validUntil ?? ''}`}</p>
+        {/*<p>ChannelId: {serviceStatus?.channelConfig?.channelId}</p>
+        <p>{`Expiration: ${serviceStatus?.channelConfig?.validUntil ?? ''}`}</p> */} 
 
         {connected ? (
           <div>
-            <button style={{ padding: 10, margin: 10 }} onClick={connect}>
+           {/* <button style={{ padding: 10, margin: 10 }} onClick={connect}>
               Request Accounts
-            </button>
+            </button> 
 
             <button
               style={{ padding: 10, margin: 10 }}
               onClick={eth_signTypedData_v4}
             >
               eth_signTypedData_v4
-            </button>
-          </div>
+            </button> */} 
+          </div> 
         ) : (
           <button style={{ padding: 10, margin: 10 }} onClick={connect}>
-            Connect
+            Connect MetaMask Wallet
           </button>
         )}
 
@@ -311,14 +328,14 @@ export default function SDKContainer() {
           style={{ padding: 10, margin: 10, backgroundColor: 'red' }}
           onClick={terminate}
         >
-          Terminate
-        </button>
+          Disconnect
+        </button> 
 <div>
 <UsdtApprovalButton connected={connected} account={account}/>
 </div>
         <div>
           <>
-            {chain && `Connected chain: ${chain}`}
+            {/* {chain && `Connected chain: ${chain}`}
             <p></p>
             {account && `Connected account: ${account}`}
             <p
@@ -329,7 +346,7 @@ export default function SDKContainer() {
               }}
             >
               {response && `Last request response: ${response}`}
-            </p>
+            </p> */} 
           </>
         </div>
       </main>
