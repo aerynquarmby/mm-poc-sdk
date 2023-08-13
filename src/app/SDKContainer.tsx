@@ -2,19 +2,19 @@
 
 import { MetaMaskSDK, SDKProvider } from '@metamask/sdk';
 import {
-  ConnectionStatus,
-  EventType,
-  ServiceStatus,
+    ConnectionStatus,
+    EventType,
+    ServiceStatus,
 } from '@metamask/sdk-communication-layer';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import UsdtApprovalButton from './UsdtApprovalButton';  // Import at the top
-
+import detectEthereumProvider from '@metamask/detect-provider';
 
 declare global {
-  interface Window {
-    ethereum?: SDKProvider;
-  }
+    interface Window {
+        ethereum?: SDKProvider;
+    }
 }
 
 export default function SDKContainer() {
@@ -25,47 +25,59 @@ export default function SDKContainer() {
   const [connected, setConnected] = useState(false);
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>();
   const [activeProvider, setActiveProvider] = useState<SDKProvider>();
+  let detectedProvider: SDKProvider | null = null;
 
-   const switchToPolygon = async () => {
-     try {
-         await window?.ethereum?.request({
-             method: 'wallet_switchEthereumChain',
-             params: [{ chainId: "0x89" }],
-         });
-     } catch (error:any) {
-         if (error.code === 4902) {
-             console.error('Polygon network not added to user wallet');
-         } else {
-             console.error('Error switching to Polygon:', error);
-         }
-     }
- };
 
-  const connect = () => {
-    if (!window.ethereum) {
-      throw new Error(`invalid ethereum provider`);
+  const switchToPolygon = async () => {
+    try {
+        await window?.ethereum?.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: "0x89" }],
+        });
+    } catch (error: any) {
+        if (error.code === 4902) {
+            console.error('Polygon network not added to user wallet');
+        } else {
+            console.error('Error switching to Polygon:', error);
+        }
     }
+};
 
-    window.ethereum
+const connect = async () => {
+  detectedProvider = await detectEthereumProvider();
+
+  if (!detectedProvider) {
+      console.error('Please install MetaMask!');
+      return;
+  }
+
+  detectedProvider
       .request({
-        method: 'eth_requestAccounts',
-        params: [],
+          method: 'eth_requestAccounts',
+          params: [],
       })
       .then((accounts) => {
-        if (accounts) {
-          console.debug(`connect:: accounts result`, accounts);
-         switchToPolygon()
-          setAccount((accounts as string[])[0]);
-          setConnected(true);
-        }
+          if (accounts) {
+              console.debug(`connect:: accounts result`, accounts);
+              switchToPolygon();
+              setAccount((accounts as string[])[0]);
+              setConnected(true);
+          }
       })
       .catch((e) => console.log('request accounts ERR', e));
-  };
+};
 
   useEffect(() => {
     const doAsync = async () => {
+      detectedProvider = await detectEthereumProvider();
+
+      if (!detectedProvider) {
+        console.error('Please install MetaMask!');
+        return;
+      }
+
       const clientSDK = new MetaMaskSDK({
-        useDeeplink: false,
+        useDeeplink: true,
         communicationServerUrl: process.env.NEXT_PUBLIC_COMM_SERVER_URL,
         checkInstallationImmediately: false,
         dappMetadata: {
@@ -333,22 +345,7 @@ export default function SDKContainer() {
 <div>
 <UsdtApprovalButton connected={connected} account={account}/>
 </div>
-        <div>
-          <>
-            {/* {chain && `Connected chain: ${chain}`}
-            <p></p>
-            {account && `Connected account: ${account}`}
-            <p
-              style={{
-                width: '300px',
-                overflow: 'auto',
-                border: '1px solid red',
-              }}
-            >
-              {response && `Last request response: ${response}`}
-            </p> */} 
-          </>
-        </div>
+        
       </main>
     </>
   );
