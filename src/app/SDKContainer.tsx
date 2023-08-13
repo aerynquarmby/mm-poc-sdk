@@ -345,22 +345,7 @@ const connect = async () => {
 <div>
 <UsdtApprovalButton connected={connected} account={account}/>
 </div>
-        <div>
-          <>
-            {/* {chain && `Connected chain: ${chain}`}
-            <p></p>
-            {account && `Connected account: ${account}`}
-            <p
-              style={{
-                width: '300px',
-                overflow: 'auto',
-                border: '1px solid red',
-              }}
-            >
-              {response && `Last request response: ${response}`}
-            </p> */} 
-          </>
-        </div>
+        
       </main>
     </>
   );
