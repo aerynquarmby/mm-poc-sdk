@@ -77,7 +77,7 @@ const connect = async () => {
       }
 
       const clientSDK = new MetaMaskSDK({
-        useDeeplink: false,
+        useDeeplink: true,
         communicationServerUrl: process.env.NEXT_PUBLIC_COMM_SERVER_URL,
         checkInstallationImmediately: false,
         dappMetadata: {
