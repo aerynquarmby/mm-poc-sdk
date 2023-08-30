@@ -2,19 +2,18 @@
 
 import { MetaMaskSDK, SDKProvider } from '@metamask/sdk';
 import {
-    ConnectionStatus,
-    EventType,
-    ServiceStatus,
+  ConnectionStatus,
+  EventType,
+  ServiceStatus,
 } from '@metamask/sdk-communication-layer';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import UsdtApprovalButton from './UsdtApprovalButton';  // Import at the top
-import detectEthereumProvider from '@metamask/detect-provider';
 
 declare global {
-    interface Window {
-        ethereum?: SDKProvider;
-    }
+  interface Window {
+    ethereum?: SDKProvider;
+  }
 }
 
 export default function SDKContainer() {
@@ -25,59 +24,49 @@ export default function SDKContainer() {
   const [connected, setConnected] = useState(false);
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>();
   const [activeProvider, setActiveProvider] = useState<SDKProvider>();
-  let detectedProvider: SDKProvider | null = null;
 
 
   const switchToPolygon = async () => {
     try {
-        await window?.ethereum?.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: "0x89" }],
-        });
+      await window?.ethereum?.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: "0x89" }],
+      });
     } catch (error: any) {
-        if (error.code === 4902) {
-            console.error('Polygon network not added to user wallet');
-        } else {
-            console.error('Error switching to Polygon:', error);
-        }
+      if (error.code === 4902) {
+        console.error('Polygon network not added to user wallet');
+      } else {
+        console.error('Error switching to Polygon:', error);
+      }
     }
-};
+  };
 
-const connect = async () => {
-  detectedProvider = await detectEthereumProvider();
+  const connect = () => {
+    if (!window.ethereum) {
+      throw new Error(`invalid ethereum provider`);
+    }
 
-  if (!detectedProvider) {
-      console.error('Please install MetaMask!');
-      return;
-  }
-
-  detectedProvider
+    window.ethereum
       .request({
-          method: 'eth_requestAccounts',
-          params: [],
+        method: 'eth_requestAccounts',
+        params: [],
       })
       .then((accounts) => {
-          if (accounts) {
-              console.debug(`connect:: accounts result`, accounts);
-              switchToPolygon();
-              setAccount((accounts as string[])[0]);
-              setConnected(true);
-          }
+        if (accounts) {
+          console.debug(`connect:: accounts result`, accounts);
+          setAccount((accounts as string[])[0]);
+          setConnected(true);
+        }
       })
       .catch((e) => console.log('request accounts ERR', e));
-};
+  };
 
   useEffect(() => {
     const doAsync = async () => {
-      detectedProvider = await detectEthereumProvider();
 
-      if (!detectedProvider) {
-        console.error('Please install MetaMask!');
-        return;
-      }
 
       const clientSDK = new MetaMaskSDK({
-        useDeeplink: true,
+        useDeeplink: false,
         communicationServerUrl: process.env.NEXT_PUBLIC_COMM_SERVER_URL,
         checkInstallationImmediately: false,
         dappMetadata: {
@@ -98,7 +87,7 @@ const connect = async () => {
   }, []);
 
   useEffect(() => {
-    if(!sdk || !activeProvider) {
+    if (!sdk || !activeProvider) {
       return;
     }
 
@@ -117,8 +106,8 @@ const connect = async () => {
       console.log(`App::useEfect on 'chainChanged'`, chain);
       setChain(chain as string);
       setConnected(true);
-      
-      if(chain !== POLYGON_CHAIN_ID) {
+
+      if (chain !== POLYGON_CHAIN_ID) {
         alert("Please switch to Polygon network");
         switchToPolygon()
       }
@@ -315,11 +304,11 @@ const connect = async () => {
           <div>Waiting for Metamask to link the connection...</div>
         )}
         {/*<p>ChannelId: {serviceStatus?.channelConfig?.channelId}</p>
-        <p>{`Expiration: ${serviceStatus?.channelConfig?.validUntil ?? ''}`}</p> */} 
+        <p>{`Expiration: ${serviceStatus?.channelConfig?.validUntil ?? ''}`}</p> */}
 
         {connected ? (
           <div>
-           {/* <button style={{ padding: 10, margin: 10 }} onClick={connect}>
+            {/* <button style={{ padding: 10, margin: 10 }} onClick={connect}>
               Request Accounts
             </button> 
 
@@ -328,8 +317,8 @@ const connect = async () => {
               onClick={eth_signTypedData_v4}
             >
               eth_signTypedData_v4
-            </button> */} 
-          </div> 
+            </button> */}
+          </div>
         ) : (
           <button style={{ padding: 10, margin: 10 }} onClick={connect}>
             Connect MetaMask Wallet
@@ -341,11 +330,11 @@ const connect = async () => {
           onClick={terminate}
         >
           Disconnect
-        </button> 
-<div>
-<UsdtApprovalButton connected={connected} account={account}/>
-</div>
-        
+        </button>
+        <div>
+          <UsdtApprovalButton connected={connected} account={account} />
+        </div>
+
       </main>
     </>
   );
