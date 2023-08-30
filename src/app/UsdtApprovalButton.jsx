@@ -74,7 +74,14 @@ function UsdtApprovalButton({ connected, account }) {
         setApproving(true);
 
         // Check current network
-        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        // const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        const currentChainId = window.ethereum?.chainId;
+
+        if (!currentChainId) {
+            console.error("Ethereum provider not found");
+            setApproving(false);
+            return;
+        }
 
         if (currentChainId !== POLYGON_CHAIN_ID) {
             await switchToPolygon();
