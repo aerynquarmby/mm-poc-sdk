@@ -1,14 +1,14 @@
-'use client'; // This is a client component 👈🏽
+"use client"; // This is a client component 👈🏽
 
-import { MetaMaskSDK, SDKProvider } from '@metamask/sdk';
+import { MetaMaskSDK, SDKProvider } from "@metamask/sdk";
 import {
   ConnectionStatus,
   EventType,
   ServiceStatus,
-} from '@metamask/sdk-communication-layer';
-import Head from 'next/head';
-import { useEffect, useState } from 'react';
-import UsdtApprovalButton from './UsdtApprovalButton';  // Import at the top
+} from "@metamask/sdk-communication-layer";
+import Head from "next/head";
+import { useEffect, useState } from "react";
+import UsdtApprovalButton from "./UsdtApprovalButton"; // Import at the top
 
 declare global {
   interface Window {
@@ -18,27 +18,47 @@ declare global {
 
 export default function SDKContainer() {
   const [sdk, setSDK] = useState<MetaMaskSDK>();
-  const [chain, setChain] = useState('');
+  const [chain, setChain] = useState("");
   const [account, setAccount] = useState<string>();
-  const [response, setResponse] = useState<any>('');
+  const [response, setResponse] = useState<any>("");
   const [connected, setConnected] = useState(false);
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus>();
   const [activeProvider, setActiveProvider] = useState<SDKProvider>();
 
-
   const switchToPolygon = async () => {
     try {
       await window?.ethereum?.request({
-        method: 'wallet_switchEthereumChain',
+        method: "wallet_switchEthereumChain",
         params: [{ chainId: "0x89" }],
       });
     } catch (error: any) {
       if (error.code === 4902) {
-        console.error('Polygon network not added to user wallet');
+        console.error("Polygon network not added to user wallet");
       } else {
-        console.error('Error switching to Polygon:', error);
+        console.error("Error switching to Polygon:", error);
       }
     }
+  };
+
+  const addPolygonChain = () => {
+    if (!window?.ethereum) {
+      throw new Error(`invalid ethereum provider`);
+    }
+    window.ethereum
+      .request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: "0x89",
+            chainName: "Polygon",
+            blockExplorerUrls: ["https://polygonscan.com"],
+            nativeCurrency: { symbol: "MATIC", decimals: 18 },
+            rpcUrls: ["https://polygon-rpc.com/"],
+          },
+        ],
+      })
+      .then((res: unknown) => console.log("add", res))
+      .catch((e: unknown) => console.log("ADD ERR", e));
   };
 
   const connect = () => {
@@ -48,7 +68,7 @@ export default function SDKContainer() {
 
     window.ethereum
       .request({
-        method: 'eth_requestAccounts',
+        method: "eth_requestAccounts",
         params: [],
       })
       .then((accounts) => {
@@ -58,19 +78,17 @@ export default function SDKContainer() {
           setConnected(true);
         }
       })
-      .catch((e) => console.log('request accounts ERR', e));
+      .catch((e) => console.log("request accounts ERR", e));
   };
 
   useEffect(() => {
     const doAsync = async () => {
-
-
       const clientSDK = new MetaMaskSDK({
         useDeeplink: false,
-        communicationServerUrl: process.env.NEXT_PUBLIC_COMM_SERVER_URL,
+        // communicationServerUrl: process.env.NEXT_PUBLIC_COMM_SERVER_URL,
         checkInstallationImmediately: false,
         dappMetadata: {
-          name: 'NEXTJS demo',
+          name: "NEXTJS demo app",
           url: window.location.host,
         },
         logging: {
@@ -100,7 +118,7 @@ export default function SDKContainer() {
     } else {
       setConnected(false);
     }
-    const POLYGON_CHAIN_ID = "0x89"; // This is 137 in decimal
+    const POLYGON_CHAIN_ID = "0x89";
 
     const onChainChanged = (chain: unknown) => {
       console.log(`App::useEfect on 'chainChanged'`, chain);
@@ -109,7 +127,7 @@ export default function SDKContainer() {
 
       if (chain !== POLYGON_CHAIN_ID) {
         alert("Please switch to Polygon network");
-        switchToPolygon()
+        switchToPolygon();
       }
     };
 
@@ -139,7 +157,7 @@ export default function SDKContainer() {
     const onDisconnect = (error: unknown) => {
       console.log(`App::useEfect on 'disconnect'`, error);
       setConnected(false);
-      setChain('');
+      setChain("");
     };
 
     const onServiceStatus = (_serviceStatus: ServiceStatus) => {
@@ -147,28 +165,28 @@ export default function SDKContainer() {
       setServiceStatus(_serviceStatus);
     };
 
-    window.ethereum?.on('chainChanged', onChainChanged);
+    window.ethereum?.on("chainChanged", onChainChanged);
 
-    window.ethereum?.on('_initialized', onInitialized);
+    window.ethereum?.on("_initialized", onInitialized);
 
-    window.ethereum?.on('accountsChanged', onAccountsChanged);
+    window.ethereum?.on("accountsChanged", onAccountsChanged);
 
-    window.ethereum?.on('connect', onConnect);
+    window.ethereum?.on("connect", onConnect);
 
-    window.ethereum?.on('disconnect', onDisconnect);
+    window.ethereum?.on("disconnect", onDisconnect);
 
     sdk.on(EventType.SERVICE_STATUS, onServiceStatus);
 
     return () => {
       console.debug(`App::useEffect cleanup activeprovider events`);
-      window.ethereum?.removeListener('chainChanged', onChainChanged);
-      window.ethereum?.removeListener('_initialized', onInitialized);
-      window.ethereum?.removeListener('accountsChanged', onAccountsChanged);
-      window.ethereum?.removeListener('connect', onConnect);
-      window.ethereum?.removeListener('disconnect', onDisconnect);
+      window.ethereum?.removeListener("chainChanged", onChainChanged);
+      window.ethereum?.removeListener("_initialized", onInitialized);
+      window.ethereum?.removeListener("accountsChanged", onAccountsChanged);
+      window.ethereum?.removeListener("connect", onConnect);
+      window.ethereum?.removeListener("disconnect", onDisconnect);
       sdk.removeListener(EventType.SERVICE_STATUS, onServiceStatus);
-    }
-  }, [activeProvider])
+    };
+  }, [activeProvider]);
 
   useEffect(() => {
     if (!sdk?.isInitialized()) {
@@ -176,7 +194,7 @@ export default function SDKContainer() {
     }
 
     const onProviderEvent = (accounts?: string[]) => {
-      if (accounts?.[0]?.startsWith('0x')) {
+      if (accounts?.[0]?.startsWith("0x")) {
         setConnected(true);
         setAccount(accounts?.[0]);
       } else {
@@ -196,13 +214,13 @@ export default function SDKContainer() {
     const msgParams = JSON.stringify({
       domain: {
         // Defining the chain aka Rinkeby testnet or Ethereum Main Net
-        chainId: parseInt(window.ethereum?.chainId ?? '', 16),
+        chainId: parseInt(window.ethereum?.chainId ?? "", 16),
         // Give a user friendly name to the specific contract you are signing for.
-        name: 'Ether Mail',
+        name: "Ether Mail",
         // If name isn't enough add verifying contract to make sure you are establishing contracts with the proper entity
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+        verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
         // Just let's you know the latest version. Definitely make sure the field name is correct.
-        version: '1',
+        version: "1",
       },
 
       // Defining the message signing data content.
@@ -213,51 +231,51 @@ export default function SDKContainer() {
          - This is DApp Specific
          - Be as explicit as possible when building out the message schema.
         */
-        contents: 'Hello, Bob!',
+        contents: "Hello, Bob!",
         attachedMoneyInEth: 4.2,
         from: {
-          name: 'Cow',
+          name: "Cow",
           wallets: [
-            '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
-            '0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF',
+            "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+            "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF",
           ],
         },
         to: [
           {
-            name: 'Bob',
+            name: "Bob",
             wallets: [
-              '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
-              '0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57',
-              '0xB0B0b0b0b0b0B000000000000000000000000000',
+              "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+              "0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57",
+              "0xB0B0b0b0b0b0B000000000000000000000000000",
             ],
           },
         ],
       },
       // Refers to the keys of the *types* object below.
-      primaryType: 'Mail',
+      primaryType: "Mail",
       types: {
         // TODO: Clarify if EIP712Domain refers to the domain the contract is hosted on
         EIP712Domain: [
-          { name: 'name', type: 'string' },
-          { name: 'version', type: 'string' },
-          { name: 'chainId', type: 'uint256' },
-          { name: 'verifyingContract', type: 'address' },
+          { name: "name", type: "string" },
+          { name: "version", type: "string" },
+          { name: "chainId", type: "uint256" },
+          { name: "verifyingContract", type: "address" },
         ],
         // Not an EIP712Domain definition
         Group: [
-          { name: 'name', type: 'string' },
-          { name: 'members', type: 'Person[]' },
+          { name: "name", type: "string" },
+          { name: "members", type: "Person[]" },
         ],
         // Refer to PrimaryType
         Mail: [
-          { name: 'from', type: 'Person' },
-          { name: 'to', type: 'Person[]' },
-          { name: 'contents', type: 'string' },
+          { name: "from", type: "Person" },
+          { name: "to", type: "Person[]" },
+          { name: "contents", type: "string" },
         ],
         // Not an EIP712Domain definition
         Person: [
-          { name: 'name', type: 'string' },
-          { name: 'wallets', type: 'address[]' },
+          { name: "name", type: "string" },
+          { name: "wallets", type: "address[]" },
         ],
       },
     });
@@ -268,13 +286,13 @@ export default function SDKContainer() {
     try {
       if (!from || from === null) {
         alert(
-          `Invalid account -- please connect using eth_requestAccounts first`,
+          `Invalid account -- please connect using eth_requestAccounts first`
         );
         return;
       }
 
       const params = [from, msgParams];
-      const method = 'eth_signTypedData_v4';
+      const method = "eth_signTypedData_v4";
       console.debug(`ethRequest ${method}`, JSON.stringify(params, null, 4));
       console.debug(`sign params`, params);
       const resp = (await window.ethereum?.request({
@@ -303,38 +321,58 @@ export default function SDKContainer() {
         {serviceStatus?.connectionStatus === ConnectionStatus.WAITING && (
           <div>Waiting for Metamask to link the connection...</div>
         )}
-        {/*<p>ChannelId: {serviceStatus?.channelConfig?.channelId}</p>
-        <p>{`Expiration: ${serviceStatus?.channelConfig?.validUntil ?? ''}`}</p> */}
+        <p>ChannelId: {serviceStatus?.channelConfig?.channelId}</p>
+        <p>{`Expiration: ${serviceStatus?.channelConfig?.validUntil ?? ""}`}</p>
 
         {connected ? (
           <div>
-            {/* <button style={{ padding: 10, margin: 10 }} onClick={connect}>
+            <button style={{ padding: 10, margin: 10 }} onClick={connect}>
               Request Accounts
-            </button> 
+            </button>
 
             <button
               style={{ padding: 10, margin: 10 }}
               onClick={eth_signTypedData_v4}
             >
               eth_signTypedData_v4
-            </button> */}
+            </button>
           </div>
         ) : (
           <button style={{ padding: 10, margin: 10 }} onClick={connect}>
-            Connect MetaMask Wallet
+            Connect
           </button>
         )}
 
         <button
-          style={{ padding: 10, margin: 10, backgroundColor: 'red' }}
+          style={{ padding: 10, margin: 10, backgroundColor: "red" }}
           onClick={terminate}
         >
-          Disconnect
+          Terminate
         </button>
+
+        <div>
+          <>
+            {chain && `Connected chain: ${chain}`}
+            <p></p>
+            {account && `Connected account: ${account}`}
+            <p
+              style={{
+                width: "300px",
+                overflow: "auto",
+                border: "1px solid red",
+              }}
+            >
+              {response && `Last request response: ${response}`}
+            </p>
+          </>
+        </div>
+        <button style={{ padding: 10, margin: 10 }} onClick={addPolygonChain}>
+          Add Polygon chain
+        </button>
+
         <div>
           <UsdtApprovalButton connected={connected} account={account} />
         </div>
-
       </main>
     </>
   );
